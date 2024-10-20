@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -40,5 +42,19 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function admin(): static
+    {
+
+        $role = Role::factory()->create(['name' => 'Admin']);
+        $role->givePermissionTo(Permission::all());
+
+        $this->hasAttached(
+            $role,
+            ['team_id' => null]
+        );
+
+        return $this;
     }
 }
