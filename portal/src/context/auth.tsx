@@ -2,9 +2,9 @@ import * as React from "react";
 
 export interface AuthContext {
   isAuthenticated: boolean;
-  login: (username: string) => Promise<void>;
+  login: (user: User) => Promise<void>;
   logout: () => Promise<void>;
-  user: string | null;
+  user: User | null;
 }
 
 const AuthContext = React.createContext<AuthContext | null>(null);
@@ -12,10 +12,16 @@ const AuthContext = React.createContext<AuthContext | null>(null);
 const key = "portal.auth.user";
 
 export function getStoredUser() {
-  return localStorage.getItem(key);
+  let user = localStorage.getItem(key);
+
+  if (user) {
+    return JSON.parse(user);
+  }
+
+  return null;
 }
 
-export function setStoredUser(user: any | null) {
+export function setStoredUser(user: User | null) {
   if (user) {
     localStorage.setItem(key, JSON.stringify(user));
   } else {
@@ -23,8 +29,14 @@ export function setStoredUser(user: any | null) {
   }
 }
 
+type User = {
+  id: number;
+  email: string;
+  name: string;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<string | null>(getStoredUser());
+  const [user, setUser] = React.useState<User | null>(getStoredUser());
   const isAuthenticated = !!user;
 
   const logout = React.useCallback(async () => {
@@ -32,9 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  const login = React.useCallback(async (username: string) => {
-    setStoredUser(username);
-    setUser(username);
+  const login = React.useCallback(async (user: User) => {
+    setStoredUser(user);
+    setUser(user);
   }, []);
 
   React.useEffect(() => {

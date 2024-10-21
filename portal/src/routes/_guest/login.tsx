@@ -2,6 +2,7 @@ import {
   createFileRoute,
   redirect,
   useNavigate,
+  useRouter,
   useSearch,
 } from "@tanstack/react-router";
 import { Link } from "@/components/ui/link";
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { login } from "@/api";
 import { z } from "zod";
-import { setStoredUser } from "@/context/auth";
+import { setStoredUser, useAuth } from "@/context/auth";
 
 export const Route = createFileRoute("/_guest/login")({
   validateSearch: z.object({
@@ -36,8 +37,10 @@ interface LoginEvent extends React.FormEvent<HTMLFormElement> {
 }
 
 function LoginPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const search = Route.useSearch();
+  const auth = useAuth();
+
   const handleSubmit = async (event: LoginEvent): Promise<void> => {
     event.preventDefault();
 
@@ -52,10 +55,10 @@ function LoginPage() {
       const { data } = await login(payload);
 
       if (data && "id" in data) {
-        setStoredUser(data);
+        auth.login(data);
       }
 
-      navigate({ to: search.redirect || "/" });
+      router.history.push(search.redirect || "/");
     } catch (error) {
       console.error(error);
     }

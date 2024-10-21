@@ -18,11 +18,13 @@ import { Route as AuthedImport } from './routes/_authed'
 import { Route as GuestResetPasswordImport } from './routes/_guest/reset-password'
 import { Route as GuestLoginImport } from './routes/_guest/login'
 import { Route as GuestForgotPasswordImport } from './routes/_guest/forgot-password'
+import { Route as AuthedSettingsIndexImport } from './routes/_authed/settings/index'
+import { Route as AuthedSettingsUsersImport } from './routes/_authed/settings/users'
+import { Route as AuthedSettingsRolesImport } from './routes/_authed/settings/roles'
 
 // Create Virtual Routes
 
 const AuthedIndexLazyImport = createFileRoute('/_authed/')()
-const AuthedAboutLazyImport = createFileRoute('/_authed/about')()
 
 // Create/Update Routes
 
@@ -41,11 +43,6 @@ const AuthedIndexLazyRoute = AuthedIndexLazyImport.update({
   getParentRoute: () => AuthedRoute,
 } as any).lazy(() => import('./routes/_authed/index.lazy').then((d) => d.Route))
 
-const AuthedAboutLazyRoute = AuthedAboutLazyImport.update({
-  path: '/about',
-  getParentRoute: () => AuthedRoute,
-} as any).lazy(() => import('./routes/_authed/about.lazy').then((d) => d.Route))
-
 const GuestResetPasswordRoute = GuestResetPasswordImport.update({
   path: '/reset-password',
   getParentRoute: () => GuestRoute,
@@ -59,6 +56,21 @@ const GuestLoginRoute = GuestLoginImport.update({
 const GuestForgotPasswordRoute = GuestForgotPasswordImport.update({
   path: '/forgot-password',
   getParentRoute: () => GuestRoute,
+} as any)
+
+const AuthedSettingsIndexRoute = AuthedSettingsIndexImport.update({
+  path: '/settings/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+
+const AuthedSettingsUsersRoute = AuthedSettingsUsersImport.update({
+  path: '/settings/users',
+  getParentRoute: () => AuthedRoute,
+} as any)
+
+const AuthedSettingsRolesRoute = AuthedSettingsRolesImport.update({
+  path: '/settings/roles',
+  getParentRoute: () => AuthedRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -100,18 +112,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestResetPasswordImport
       parentRoute: typeof GuestImport
     }
-    '/_authed/about': {
-      id: '/_authed/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AuthedAboutLazyImport
-      parentRoute: typeof AuthedImport
-    }
     '/_authed/': {
       id: '/_authed/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthedIndexLazyImport
+      parentRoute: typeof AuthedImport
+    }
+    '/_authed/settings/roles': {
+      id: '/_authed/settings/roles'
+      path: '/settings/roles'
+      fullPath: '/settings/roles'
+      preLoaderRoute: typeof AuthedSettingsRolesImport
+      parentRoute: typeof AuthedImport
+    }
+    '/_authed/settings/users': {
+      id: '/_authed/settings/users'
+      path: '/settings/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof AuthedSettingsUsersImport
+      parentRoute: typeof AuthedImport
+    }
+    '/_authed/settings/': {
+      id: '/_authed/settings/'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsIndexImport
       parentRoute: typeof AuthedImport
     }
   }
@@ -120,13 +146,17 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AuthedRouteChildren {
-  AuthedAboutLazyRoute: typeof AuthedAboutLazyRoute
   AuthedIndexLazyRoute: typeof AuthedIndexLazyRoute
+  AuthedSettingsRolesRoute: typeof AuthedSettingsRolesRoute
+  AuthedSettingsUsersRoute: typeof AuthedSettingsUsersRoute
+  AuthedSettingsIndexRoute: typeof AuthedSettingsIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedAboutLazyRoute: AuthedAboutLazyRoute,
   AuthedIndexLazyRoute: AuthedIndexLazyRoute,
+  AuthedSettingsRolesRoute: AuthedSettingsRolesRoute,
+  AuthedSettingsUsersRoute: AuthedSettingsUsersRoute,
+  AuthedSettingsIndexRoute: AuthedSettingsIndexRoute,
 }
 
 const AuthedRouteWithChildren =
@@ -151,8 +181,10 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/login': typeof GuestLoginRoute
   '/reset-password': typeof GuestResetPasswordRoute
-  '/about': typeof AuthedAboutLazyRoute
   '/': typeof AuthedIndexLazyRoute
+  '/settings/roles': typeof AuthedSettingsRolesRoute
+  '/settings/users': typeof AuthedSettingsUsersRoute
+  '/settings': typeof AuthedSettingsIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -160,8 +192,10 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/login': typeof GuestLoginRoute
   '/reset-password': typeof GuestResetPasswordRoute
-  '/about': typeof AuthedAboutLazyRoute
   '/': typeof AuthedIndexLazyRoute
+  '/settings/roles': typeof AuthedSettingsRolesRoute
+  '/settings/users': typeof AuthedSettingsUsersRoute
+  '/settings': typeof AuthedSettingsIndexRoute
 }
 
 export interface FileRoutesById {
@@ -171,8 +205,10 @@ export interface FileRoutesById {
   '/_guest/forgot-password': typeof GuestForgotPasswordRoute
   '/_guest/login': typeof GuestLoginRoute
   '/_guest/reset-password': typeof GuestResetPasswordRoute
-  '/_authed/about': typeof AuthedAboutLazyRoute
   '/_authed/': typeof AuthedIndexLazyRoute
+  '/_authed/settings/roles': typeof AuthedSettingsRolesRoute
+  '/_authed/settings/users': typeof AuthedSettingsUsersRoute
+  '/_authed/settings/': typeof AuthedSettingsIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -182,10 +218,20 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/reset-password'
-    | '/about'
     | '/'
+    | '/settings/roles'
+    | '/settings/users'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '' | '/forgot-password' | '/login' | '/reset-password' | '/about' | '/'
+  to:
+    | ''
+    | '/forgot-password'
+    | '/login'
+    | '/reset-password'
+    | '/'
+    | '/settings/roles'
+    | '/settings/users'
+    | '/settings'
   id:
     | '__root__'
     | '/_authed'
@@ -193,8 +239,10 @@ export interface FileRouteTypes {
     | '/_guest/forgot-password'
     | '/_guest/login'
     | '/_guest/reset-password'
-    | '/_authed/about'
     | '/_authed/'
+    | '/_authed/settings/roles'
+    | '/_authed/settings/users'
+    | '/_authed/settings/'
   fileRoutesById: FileRoutesById
 }
 
@@ -227,8 +275,10 @@ export const routeTree = rootRoute
     "/_authed": {
       "filePath": "_authed.tsx",
       "children": [
-        "/_authed/about",
-        "/_authed/"
+        "/_authed/",
+        "/_authed/settings/roles",
+        "/_authed/settings/users",
+        "/_authed/settings/"
       ]
     },
     "/_guest": {
@@ -251,12 +301,20 @@ export const routeTree = rootRoute
       "filePath": "_guest/reset-password.tsx",
       "parent": "/_guest"
     },
-    "/_authed/about": {
-      "filePath": "_authed/about.lazy.tsx",
-      "parent": "/_authed"
-    },
     "/_authed/": {
       "filePath": "_authed/index.lazy.tsx",
+      "parent": "/_authed"
+    },
+    "/_authed/settings/roles": {
+      "filePath": "_authed/settings/roles.tsx",
+      "parent": "/_authed"
+    },
+    "/_authed/settings/users": {
+      "filePath": "_authed/settings/users.tsx",
+      "parent": "/_authed"
+    },
+    "/_authed/settings/": {
+      "filePath": "_authed/settings/index.tsx",
       "parent": "/_authed"
     }
   }

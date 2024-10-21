@@ -1,13 +1,13 @@
-import { createLazyFileRoute } from '@tanstack/react-router'
+import { createLazyFileRoute } from "@tanstack/react-router";
 
-export const Route = createLazyFileRoute('/_authed/')({
+export const Route = createLazyFileRoute("/_authed/")({
   component: Index,
-})
+});
 
 function Index() {
   return (
-    <div className="p-2">
+    <div>
       <h3>Welcome Home!</h3>
     </div>
-  )
+  );
 }

@@ -8,10 +8,18 @@
 
 import * as Headless from "@headlessui/react";
 import React, { forwardRef } from "react";
-import { Link as RouterLink, type LinkProps } from "@tanstack/react-router";
+import {
+  Link as RouterLink,
+  type LinkProps as RouterLinkProps,
+} from "@tanstack/react-router";
+
+export type LinkProps = {
+  href: RouterLinkProps["to"];
+  className?: string;
+} & Omit<RouterLinkProps, "to">;
 
 export const Link = forwardRef(function Link(
-  props: { href: LinkProps["to"]; className?: string } & Omit<LinkProps, "to">,
+  props: LinkProps,
   ref: React.ForwardedRef<HTMLAnchorElement>,
 ) {
   return (
