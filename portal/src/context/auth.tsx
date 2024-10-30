@@ -1,5 +1,5 @@
-import * as React from "react";
-
+import * as React from 'react';
+import { client } from '@/api';
 export interface AuthContext {
   isAuthenticated: boolean;
   login: (user: User) => Promise<void>;
@@ -7,27 +7,47 @@ export interface AuthContext {
   user: User | null;
 }
 
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 const AuthContext = React.createContext<AuthContext | null>(null);
 
-const key = "portal.auth.user";
-
-export function getStoredUser() {
-  let user = localStorage.getItem(key);
-
-  if (user) {
-    return JSON.parse(user);
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response?.status === 401 &&
+      window.location.pathname !== '/login'
+    ) {
+      authStore.getState().logout();
+      window.location.assign('/login?session=expired');
+    }
+    return Promise.reject(error);
   }
+);
 
-  return null;
-}
+const key = 'portal.auth.user';
 
-export function setStoredUser(user: User | null) {
-  if (user) {
-    localStorage.setItem(key, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(key);
-  }
-}
+type AuthStore = {
+  user: User | null;
+  login: (user: User) => Promise<void>;
+  logout: () => Promise<void>;
+};
+const authStore = create<AuthStore>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      login: async (user: User) => {
+        set({ user });
+      },
+      logout: async () => {
+        set({ user: null });
+      },
+    }),
+    {
+      name: 'portal.auth',
+    }
+  )
+);
 
 type User = {
   id: number;
@@ -36,23 +56,8 @@ type User = {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(getStoredUser());
+  const { user, login, logout } = authStore();
   const isAuthenticated = !!user;
-
-  const logout = React.useCallback(async () => {
-    setStoredUser(null);
-    setUser(null);
-  }, []);
-
-  const login = React.useCallback(async (user: User) => {
-    setStoredUser(user);
-    setUser(user);
-  }, []);
-
-  React.useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
-
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
@@ -63,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = React.useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

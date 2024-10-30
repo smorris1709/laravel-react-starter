@@ -1,29 +1,13 @@
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-  useRouter,
-  useSearch,
-} from "@tanstack/react-router";
-import { Link } from "@/components/ui/link";
-import Logo from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { login } from "@/api";
-import { z } from "zod";
-import { setStoredUser, useAuth } from "@/context/auth";
+import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { Link } from '@/components/ui/link';
+import Logo from '@/components/logo';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { login } from '@/api';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
-export const Route = createFileRoute("/_guest/login")({
-  validateSearch: z.object({
-    redirect: z.string().optional().catch(""),
-  }),
-  beforeLoad: async ({ context, search }) => {
-    if (context.auth.isAuthenticated) {
-      throw redirect({
-        to: search.redirect || "/",
-      });
-    }
-  },
+export const Route = createFileRoute('/_guest/login')({
   component: LoginPage,
 });
 
@@ -39,7 +23,10 @@ interface LoginEvent extends React.FormEvent<HTMLFormElement> {
 function LoginPage() {
   const router = useRouter();
   const search = Route.useSearch();
-  const auth = useAuth();
+  const navigate = Route.useNavigate();
+  const auth = Route.useRouteContext({
+    select: ({ auth }) => auth,
+  });
 
   const handleSubmit = async (event: LoginEvent): Promise<void> => {
     event.preventDefault();
@@ -47,26 +34,39 @@ function LoginPage() {
     const formData = new FormData(event.target);
 
     const payload: LoginFormData = {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
+      email: formData.get('email') as string,
+      password: formData.get('password') as string,
     };
 
     try {
       const { data } = await login(payload);
 
-      if (data && "id" in data) {
+      if (data && 'id' in data) {
         auth.login(data);
       }
 
-      router.history.push(search.redirect || "/");
+      router.history.push(search.redirect || '/');
     } catch (error) {
       console.error(error);
     }
   };
 
+  useEffect(() => {
+    if (search.session === 'expired') {
+      toast.error('Your session has expired. Please login again.');
+      // remove the session from the URL
+      navigate({
+        search: (prev) => ({
+          ...prev,
+          session: undefined,
+        }),
+      });
+    }
+  }, [search.session]);
+
   return (
     <>
-      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+      <div className="flex min-h-full flex-1 flex-col justify-center py-12 px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <Logo />
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
@@ -106,7 +106,7 @@ function LoginPage() {
                 <div className="text-sm">
                   <Link
                     href="/forgot-password"
-                    className="font-semibold text-gray-900 dark:text-gray-50 hover:text-indigo-600 dark:hover:text-indigo-400"
+                    className="font-semibold text-gray-900 hover:text-indigo-600 dark:text-gray-50 dark:hover:text-indigo-400"
                   >
                     Forgot password?
                   </Link>
@@ -125,7 +125,7 @@ function LoginPage() {
             </div>
 
             <div>
-              <Button type="submit" className="w-full" variant={"default"}>
+              <Button type="submit" className="w-full" variant={'default'}>
                 Sign in
               </Button>
             </div>

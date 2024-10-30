@@ -1,5 +1,5 @@
-import { getUser } from "@/api";
-import { AppSidebar } from "@/components/layouts/app-sidebar";
+import { checkUser } from '@/api';
+import { AppSidebar } from '@/components/layouts/app-sidebar';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,40 +7,57 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Link } from "@/components/ui/link";
-import { Separator } from "@/components/ui/separator";
+} from '@/components/ui/breadcrumb';
+import { Link } from '@/components/ui/link';
+import { Separator } from '@/components/ui/separator';
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { setStoredUser } from "@/context/auth";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+} from '@/components/ui/sidebar';
 
-export const Route = createFileRoute("/_authed")({
-  beforeLoad: async ({ context, location }) => {
-    if (!context.auth.isAuthenticated) {
-      try {
-        const user = await getUser();
-        setStoredUser(user);
-        return;
-      } catch (error) {
-        setStoredUser(null);
-        throw redirect({
-          to: "/login",
-          search: {
-            redirect: location.href,
-          },
-        });
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useLocation,
+  useRouter,
+} from '@tanstack/react-router';
+// import { isAxiosError } from 'axios';
+
+export const Route = createFileRoute('/_authed')({
+  loader: async ({ context, location }) => {
+    try {
+      const user = await checkUser();
+      context.auth.login(user);
+      return;
+    } catch (error) {
+      // if (isAxiosError(error) && error.status === 401) {
+      // }
+      if (context.auth.isAuthenticated) {
+        context.auth.logout();
       }
+      throw redirect({
+        to: '/login',
+        search: {
+          redirect: location.href,
+        },
+      });
     }
   },
+  staleTime: 30_000,
 
-  component: () => <RootLayout />,
+  component: RootLayout,
 });
 
 function RootLayout() {
+  const { pathname } = useLocation();
+  console.log('🚀 ~ RootLayout ~ path:', pathname);
+
+  function getSegments(path: string) {
+    return path.split('/').filter(Boolean);
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar collapsible="icon" />
@@ -63,7 +80,7 @@ function RootLayout() {
           </Breadcrumb>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="min-h-[100vh] flex-1 rounded-xl bg-gray-100/50 md:min-h-min">
+          <div className="min-h-[100vh] flex-1 md:min-h-min">
             <Outlet />
           </div>
         </div>
